@@ -39,6 +39,7 @@ module XMonad.Actions.DynamicProjects
        , currentProject
        , activateProject
        , modifyProject
+       , defProject
        ) where
 
 --------------------------------------------------------------------------------

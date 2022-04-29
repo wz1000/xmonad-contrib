@@ -105,6 +105,7 @@ fullscreenSupportBorder c =
 -- of the above have been sent.
 data FullscreenMessage = AddFullscreen Window
                        | RemoveFullscreen Window
+                       | ToggleFullscreen Window
                        | FullscreenChanged
 
 instance Message FullscreenMessage
@@ -120,10 +121,16 @@ data FullscreenFloat a = FullscreenFloat W.RationalRect (M.Map a (W.RationalRect
 
 instance LayoutModifier FullscreenFull Window where
   pureMess ff@(FullscreenFull frect fulls) m = case fromMessage m of
-    Just (AddFullscreen win) -> Just $ FullscreenFull frect $ nub $ win:fulls
-    Just (RemoveFullscreen win) -> Just $ FullscreenFull frect $ delete win fulls
+    Just (AddFullscreen win) -> add win
+    Just (RemoveFullscreen win) -> remove win
+    Just (ToggleFullscreen win)
+      | win `elem` fulls -> remove win
+      | otherwise -> add win
     Just FullscreenChanged -> Just ff
     _ -> Nothing
+    where
+      add win = Just $ FullscreenFull frect $ nub $ win:fulls
+      remove win = Just $ FullscreenFull frect $ delete win fulls
 
   pureModifier (FullscreenFull frect fulls) rect _ list =
     (visfulls' ++ rest', Nothing)
@@ -136,28 +143,31 @@ instance LayoutModifier FullscreenFull Window where
 
 instance LayoutModifier FullscreenFocus Window where
   pureMess ff@(FullscreenFocus frect fulls) m = case fromMessage m of
-    Just (AddFullscreen win) -> Just $ FullscreenFocus frect $ nub $ win:fulls
-    Just (RemoveFullscreen win) -> Just $ FullscreenFocus frect $ delete win fulls
-    Just FullscreenChanged -> Just ff
+    Just (AddFullscreen win) -> add win
+    Just (RemoveFullscreen win) -> remove win
+    Just (ToggleFullscreen win)
+      | win `elem` fulls -> remove win
+      | otherwise -> add win
     _ -> Nothing
+    where
+      add win = Just $ FullscreenFocus frect $ nub $ win:fulls
+      remove win = Just $ FullscreenFocus frect $ delete win fulls
 
   pureModifier (FullscreenFocus frect fulls) rect (Just W.Stack {W.focus = f}) list
      | f `elem` fulls = ((f, rect') : rest, Nothing)
      | otherwise = (list, Nothing)
-     where rest = filter (not . orP (== f) (R.supersetOf rect')) list
+     where rest = filter (not . (== f) . fst) list
            rect' = scaleRationalRect rect frect
   pureModifier _ _ Nothing list = (list, Nothing)
 
 instance LayoutModifier FullscreenFloat Window where
   handleMess (FullscreenFloat frect fulls) m = case fromMessage m of
-    Just (AddFullscreen win) -> do
-      mrect <- M.lookup win . W.floating <$> gets windowset
-      return $ case mrect of
-        Just rect -> Just $ FullscreenFloat frect $ M.insert win (rect,True) fulls
-        Nothing -> Nothing
 
-    Just (RemoveFullscreen win) ->
-      return $ Just $ FullscreenFloat frect $ M.adjust (second $ const False) win fulls
+    Just (AddFullscreen win) -> add win
+    Just (RemoveFullscreen win) -> remove win
+    Just (ToggleFullscreen win)
+      | M.member win fulls -> remove win
+      | otherwise -> add win
 
     -- Modify the floating member of the stack set directly; this is the hackish part.
     Just FullscreenChanged -> do
@@ -171,6 +181,15 @@ instance LayoutModifier FullscreenFloat Window where
             doFull (rect, False) _ = rect
 
     Nothing -> return Nothing
+    where
+      add win = do
+        mrect <- M.lookup win . W.floating <$> gets windowset
+        return $ case mrect of
+          Just rect -> Just $ FullscreenFloat frect $ M.insert win (rect,True) fulls
+          Nothing -> Nothing
+
+      remove win = return $ Just $ FullscreenFloat frect $ M.adjust (second $ const False) win fulls
+
 
 -- | Layout modifier that makes fullscreened window fill the
 -- entire screen.

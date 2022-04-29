@@ -41,7 +41,7 @@ module XMonad.Util.NamedActions (
     (^++^),
 
     NamedAction(..),
-    HasName,
+    HasName(..),
     defaultKeysDescr
     ) where
 

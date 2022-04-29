@@ -119,7 +119,7 @@ cycleWindowSets genOptions mods keyNext keyPrev = do
   let
     preview = do
       i <- get
-      lift $ windows (view (options !! (i `mod` n)) . unView')
+      lift $ windows (greedyView (options !! (i `mod` n)) . unView')
       where n = length options
   void . repeatableSt (-1) mods keyNext $ \t s -> when (t == keyPress) $ if
     | s == keyNext -> modify succ >> preview
