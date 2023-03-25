@@ -266,9 +266,8 @@ instance SetsAmbiguous Ambiguity where
                     -- For the following: in stacking order lowest -> highest.
                     ts = reverse . zipWith wz [-1,-2..] $ wrs
                     fs = zipWith wz [0..] $ do
-                        w       <- reverse . W.integrate' . W.stack . W.workspace $ scr
-                        Just wr <- [M.lookup w (W.floating wset)]
-                        return (w,scaleRationalRect sr wr)
+                        (w,wr) <- reverse $ wrs
+                        return (w,wr)
                     sr = screenRect . W.screenDetail $ scr
                 (i1,w1,wr1) <- fs
                 guard $ case amb of
