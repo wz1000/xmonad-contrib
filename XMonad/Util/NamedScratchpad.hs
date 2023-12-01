@@ -47,6 +47,7 @@ module XMonad.Util.NamedScratchpad (
   setNoexclusive,
   resizeNoexclusive,
   floatMoveNoexclusive,
+  isNSP,
 
   -- * Deprecations
   namedScratchpadFilterOutWorkspace,
