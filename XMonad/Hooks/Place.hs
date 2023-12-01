@@ -45,6 +45,7 @@ import XMonad.Actions.FloatKeys
 import qualified Data.Map as M
 import Data.Ratio ((%))
 import Control.Monad.Trans (lift)
+import Data.List.Extra (nubOrd)
 
 -- $usage
 -- This module provides a 'ManageHook' that automatically places
@@ -343,7 +344,7 @@ getNecessaryData window ws floats
 data SmartRectangle a = SR
   { sr_x0, sr_y0 :: a -- ^ Top left coordinates, inclusive
   , sr_x1, sr_y1 :: a -- ^ Bottom right coorsinates, exclusive
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 r2sr :: Rectangle -> SmartRectangle Position
 r2sr (Rectangle x y w h) = SR x y (x + fi w) (y + fi h)
@@ -376,7 +377,7 @@ placeSmart :: (Rational, Rational) -- ^ point of the screen where windows
            -> Dimension -- ^ height
            -> Rectangle
 placeSmart (rx, ry) s@(Rectangle sx sy sw sh) rs w h
-  = let free = map sr2r $ findSpace (r2sr s) (map r2sr rs) (fi w) (fi h)
+  = let free = map sr2r $ findSpace (r2sr s) (nubOrd $ map r2sr rs) (fi w) (fi h)
     in position free (scale rx sx (sx + fi sw - fi w))
                      (scale ry sy (sy + fi sh - fi h))
                      w h

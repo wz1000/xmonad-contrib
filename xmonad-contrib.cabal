@@ -58,6 +58,7 @@ library
                    bytestring >= 0.10 && < 0.13,
                    containers >= 0.5 && < 0.9,
                    directory,
+                   extra,
                    filepath,
                    time >= 1.8 && < 1.16,
                    process,
