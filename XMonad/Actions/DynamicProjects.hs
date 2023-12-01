@@ -22,6 +22,7 @@ module XMonad.Actions.DynamicProjects
          -- * Types
          Project (..)
        , ProjectName
+       , ProjectMode(..)
 
          -- * Hooks
        , dynamicProjects
@@ -31,6 +32,7 @@ module XMonad.Actions.DynamicProjects
        , shiftToProjectPrompt
        , renameProjectPrompt
        , changeProjectDirPrompt
+       , projectPrompt
 
          -- * Helper Functions
        , switchProject
@@ -144,7 +146,7 @@ instance ExtensionClass ProjectState where
 --------------------------------------------------------------------------------
 -- Internal types for working with XPrompt.
 data ProjectPrompt = ProjectPrompt XPConfig ProjectMode [ProjectName]
-data ProjectMode = SwitchMode | ShiftMode | RenameMode | DirMode
+data ProjectMode = SwitchMode | ShiftMode | RenameMode | DirMode | CustomMode String (Project -> X ())
 
 instance XPrompt ProjectPrompt where
   showXPrompt (ProjectPrompt _ submode _) =
@@ -153,6 +155,7 @@ instance XPrompt ProjectPrompt where
       ShiftMode  -> "Send Window to Project: "
       RenameMode -> "New Project Name: "
       DirMode    -> "Change Project Directory: "
+      CustomMode x _ -> x ++ ": "
 
   completionFunction (ProjectPrompt _ RenameMode _) = return . (:[])
   completionFunction (ProjectPrompt c DirMode _) =
@@ -173,6 +176,11 @@ instance XPrompt ProjectPrompt where
     let name = if null auto then buf else auto
     ps <- XS.gets projects
     shiftToProject . fromMaybe (defProject name) $ Map.lookup name ps
+
+  modeAction (ProjectPrompt _ (CustomMode _ f) _) buf auto = do
+    let name = if null auto then buf else auto
+    ps <- XS.gets projects
+    f . fromMaybe (defProject name) $ Map.lookup name ps
 
   modeAction (ProjectPrompt _ RenameMode _) name _ =
     when (not (null name) && not (all isSpace name)) $ do
