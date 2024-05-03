@@ -543,7 +543,7 @@ checkKeymap conf km = warn (doKeymapCheck conf km)
                             ++ msg "duplicate" dup
         msg _ [] = ""
         msg m xs = m ++ " keybindings detected: " ++ showBindings xs
-        showBindings = unwords . map (("\""++) . (++"\""))
+        showBindings = unlines . map (("\""++) . (++"\""))
 
 -- | Given a config and a list of (key sequence description, action)
 --   pairs, check the key sequence descriptions for validity,
